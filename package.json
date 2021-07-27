@@ -16,6 +16,9 @@
   "homepage": "https://github.com/preco21/ddd-core#readme",
   "repository": "preco21/ddd-core",
   "bugs": "https://github.com/preco21/ddd-core/issues",
+  "dependencies": {
+    "class-validator": "^0.13.1"
+  },
   "devDependencies": {
     "@preco21/eslint-config": "^1.1.0",
     "@preco21/tsconfig": "^5.0.3",

@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "esModuleInterop": true,
+    "experimentalDecorators": true,
     "declaration": true,
     "sourceMap": true,
     "incremental": true
