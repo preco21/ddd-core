@@ -1,7 +1,7 @@
 {
   "name": "ddd-core",
   "version": "0.0.0",
-  "description": "A experimental domain-driven design core written in TypeScript",
+  "description": "An experimental domain-driven design core written in TypeScript",
   "author": "Plusb Preco <plusb21@gmail.com>",
   "private": true,
   "main": "dist/index.js",
