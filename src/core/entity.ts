@@ -1,14 +1,16 @@
 import { IEntity, Id } from '../common/entity';
 import { IKeyed, Key } from '../common/keyed';
 import { IEquatable } from '../common/equatable';
-import { ISerializable, isSerializable } from '../common/serializable';
+import { ISerializable, serialize } from '../common/serializable';
 import { generateGUID } from '../utils/guid';
 
-export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>>, ISerializable {
+export abstract class Entity<T extends object>
+implements IEntity, IKeyed, IEquatable<Entity<T>>, ISerializable {
   public readonly id?: Id;
   public readonly key: Key;
   public readonly createdAt: number;
-  protected _props: T;
+  public readonly props: T;
+  private readonly _props: T;
   private _touched: boolean;
   private _deleted: boolean;
 
@@ -16,13 +18,15 @@ export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>
     this.id = id ?? undefined;
     this.key = generateGUID();
     this.createdAt = Date.now();
-    this._props = props;
     this._touched = false;
     this._deleted = false;
-  }
-
-  public get props(): T {
-    return this._props;
+    this._props = props;
+    this.props = new Proxy<T>(this._props, {
+      set: (target, prop, value, receiver) => {
+        this._touched = true;
+        return Reflect.set(target, prop, value, receiver);
+      },
+    });
   }
 
   public get touched(): boolean {
@@ -59,35 +63,15 @@ export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>
   }
 
   public toJSON(): unknown {
-    if (this._props == null) {
-      return this._props;
-    }
-    const output: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(this._props)) {
-      // TODO: handle arrays or objects
-      if (isSerializable(value)) {
-        output[key] = value.toJSON();
-      } else {
-        output[key] = value;
-      }
-    }
+    const output = serialize(this._props) as Record<string, unknown>;
     output['_id'] = this.id;
     output['_key'] = this.key;
     output['_createdAt'] = this.createdAt;
     return output;
   }
-
-  protected set(props: T): void {
-    if (props == null || typeof props !== 'object') {
-      this._props = props;
-    } else {
-      Object.assign(this._props, props);
-    }
-    this._touched = true;
-  }
 }
 
-export function isEntityEqual<T>(
+export function isEntityEqual<T extends object>(
   a?: Entity<T>,
   b?: Entity<T>,
 ): boolean {
@@ -99,6 +83,6 @@ export function isEntityEqual<T>(
 
 export function isEntity(
   object: unknown,
-): object is Entity<unknown> {
+): object is Entity<object> {
   return object instanceof Entity;
 }
