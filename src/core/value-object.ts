@@ -1,5 +1,5 @@
 import { IEquatable } from '../common/equatable';
-import { ISerializable, isSerializable } from '../common/serializable';
+import { ISerializable, isSerializable, serialize } from '../common/serializable';
 
 export abstract class ValueObject<T> implements IEquatable<ValueObject<T>>, ISerializable {
   protected readonly props: T;
@@ -40,18 +40,7 @@ export abstract class ValueObject<T> implements IEquatable<ValueObject<T>>, ISer
   }
 
   public toJSON(): unknown {
-    if (this.props == null) {
-      return this.props;
-    }
-    const output: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(this.props)) {
-      if (isSerializable(value)) {
-        output[key] = value.toJSON();
-      } else {
-        output[key] = value;
-      }
-    }
-    return output;
+    return serialize(this.props);
   }
 
   public getRaw(): T {
