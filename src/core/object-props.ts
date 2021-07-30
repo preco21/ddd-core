@@ -1,16 +1,14 @@
-export type PlainProps<T> = Omit<T, '__brand__'>;
-
-export abstract class ObjectProps<T> {
-  protected readonly __brand__: Symbol = Symbol('ObjectProps');
-
-  constructor(props: PlainProps<T> = {} as PlainProps<T>) {
+export abstract class ObjectProps {
+  // should not be called directly
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(props: any = {}) {
     Object.assign(this, props);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static create<T extends new (props: any) => object>(
     this: T,
-    props: PlainProps<InstanceType<T>>,
+    props: InstanceType<T>,
   ): InstanceType<T> {
     // @ts-ignore
     const object = new this() as InstanceType<T>;
