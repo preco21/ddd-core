@@ -8,13 +8,29 @@ export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>
   public readonly id?: Id;
   public readonly key: Key;
   public readonly createdAt: number;
-  protected readonly props: T;
+  protected _props: T;
+  private _touched: boolean;
+  private _deleted: boolean;
 
   constructor(props: T, id?: Id) {
     this.id = id ?? undefined;
     this.key = generateGUID();
     this.createdAt = Date.now();
-    this.props = props;
+    this._props = props;
+    this._touched = false;
+    this._deleted = false;
+  }
+
+  public get props(): T {
+    return this._props;
+  }
+
+  public get touched(): boolean {
+    return this._touched;
+  }
+
+  public get deleted(): boolean {
+    return this._deleted;
   }
 
   public equals(other?: Entity<T>): boolean {
@@ -31,15 +47,24 @@ export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>
   }
 
   public isTransient(): boolean {
-    return this.id != null;
+    return this.id == null;
+  }
+
+  public touch(): void {
+    this._touched = true;
+  }
+
+  public discard(): void {
+    this._deleted = true;
   }
 
   public toJSON(): unknown {
-    if (this.props == null) {
-      return this.props;
+    if (this._props == null) {
+      return this._props;
     }
     const output: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(this.props)) {
+    for (const [key, value] of Object.entries(this._props)) {
+      // TODO: handle arrays or objects
       if (isSerializable(value)) {
         output[key] = value.toJSON();
       } else {
@@ -50,6 +75,15 @@ export abstract class Entity<T> implements IEntity, IKeyed, IEquatable<Entity<T>
     output['_key'] = this.key;
     output['_createdAt'] = this.createdAt;
     return output;
+  }
+
+  protected set(props: T): void {
+    if (props == null || typeof props !== 'object') {
+      this._props = props;
+    } else {
+      Object.assign(this._props, props);
+    }
+    this._touched = true;
   }
 }
 
